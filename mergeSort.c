@@ -6,92 +6,112 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <pthread.h>
 
 int arr[100];
+pthread_t hilos[100];
+pthread_mutex_t lock;
+int h = 0;
 
 // Merge two subarrays L and M into arr
-void merge(int p, int q, int r) {
+void merge(int p, int q, int r){
 
-  // Create L ← A[p..q] and M ← A[q+1..r]
-  int n1 = q - p + 1;
-  int n2 = r - q;
+    // Create L ← A[p..q] and M ← A[q+1..r]
+    int n1 = q - p + 1;
+    int n2 = r - q;
 
-  int L[n1], M[n2];
+    int L[n1], M[n2];
 
-  for (int i = 0; i < n1; i++)
-    L[i] = arr[p + i];
-  for (int j = 0; j < n2; j++)
-    M[j] = arr[q + 1 + j];
+    for (int i = 0; i < n1; i++)
+        L[i] = arr[p + i];
+    for (int j = 0; j < n2; j++)
+        M[j] = arr[q + 1 + j];
 
-  // Maintain current index of sub-arrays and main array
-  int i, j, k;
-  i = 0;
-  j = 0;
-  k = p;
+    // Maintain current index of sub-arrays and main array
+    int i, j, k;
+    i = 0;
+    j = 0;
+    k = p;
 
-  // Until we reach either end of either L or M, pick larger among
-  // elements L and M and place them in the correct position at A[p..r]
-  while (i < n1 && j < n2) {
-    if (L[i] <= M[j]) {
-      arr[k] = L[i];
-      i++;
-    } else {
-      arr[k] = M[j];
-      j++;
+    // Until we reach either end of either L or M, pick larger among
+    // elements L and M and place them in the correct position at A[p..r]
+    while (i < n1 && j < n2){
+        if (L[i] <= M[j]){
+            arr[k] = L[i];
+            i++;
+        }
+        else{
+            arr[k] = M[j];
+            j++;
+        }
+        k++;
     }
-    k++;
-  }
 
-  // When we run out of elements in either L or M,
-  // pick up the remaining elements and put in A[p..r]
-  while (i < n1) {
-    arr[k] = L[i];
-    i++;
-    k++;
-  }
+    // When we run out of elements in either L or M,
+    // pick up the remaining elements and put in A[p..r]
+    while (i < n1){
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
 
-  while (j < n2) {
-    arr[k] = M[j];
-    j++;
-    k++;
-  }
+    while (j < n2){
+        arr[k] = M[j];
+        j++;
+        k++;
+    }
 }
 
 // Divide the array into two subarrays, sort them and merge them
-void mergeSort(int l, int r) {
-  if (l < r) {
+void mergeSort(int l, int r){
+    if (l < r){
 
-    // m is the point where the array is divided into two subarrays
-    int m = l + (r - l) / 2;
+        // m is the point where the array is divided into two subarrays
+        int m = l + (r - l) / 2;
 
-    mergeSort(l, m);
-    mergeSort(m + 1, r);
+        pthread_create(&hilos[h], NULL, mergeSort, (l, m));
+        h++;
+        pthread_create(&hilos[h], NULL, mergeSort, (m+1, r));
+        h++;
+        //mergeSort(l, m);
+        //mergeSort(m + 1, r);
 
-    // Merge the sorted subarrays
-    merge(l, m, r);
-  }
+    //crea barrera, genera threads, la barrera es cuando todos están ordenaods
+    //n medios mezclas con semáforo
+
+        // Merge the sorted subarrays
+        merge(l, m, r);
+    }
 }
 
 // Print the array
-void printArray(int size) {
-  for (int i = 0; i < size; i++)
-    printf("%d ", arr[i]);
-  printf("\n");
+void printArray(int size){
+    for (int i = 0; i < size; i++)
+        printf("%d ", arr[i]);
+    printf("\n");
 }
 
 // Driver program
-int main() {
-   time_t t;
-   
-   /* Intializes random number generator */
-   srand((unsigned) time(&t));
-  for (int i = 0; i < 100; i++){
-    arr[i] = rand() % 1000;
-  }
-  int size = 100;
+int main(){
+    time_t t;
 
-  mergeSort(0, size - 1);
+    /* Intializes random number generator */
+    srand((unsigned)time(&t));
+    for (int i = 0; i < 100; i++){
+        arr[i] = rand() % 1000;
+    }
+    int size = 100;
 
-  printf("Sorted array: \n");
-  printArray(size);
+
+    pthread_create(&hilos[h], NULL, mergeSort, (0, size-1));
+    h++;
+    //mergeSort(0, size - 1);
+
+    for (int i = 0; i <= 100; i++){
+        pthread_join(hilos[i], NULL);
+    }
+    pthread_mutex_destroy(&lock);
+
+    printf("Sorted array: \n");
+    printArray(size);
 }
