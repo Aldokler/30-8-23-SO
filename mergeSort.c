@@ -7,14 +7,22 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
+#include "sync.c"
 
 int arr[100];
 pthread_t hilos[100];
 pthread_mutex_t lock;
 int h = 0;
 
+struct mergeParam { int p, q, r; } ;
+
 // Merge two subarrays L and M into arr
-void merge(int p, int q, int r){
+void *merge(void *arg){
+    struct mergeParam * params = arg;
+    int p, q, r;
+    p = params->p;
+    q = params->q;
+    r = params->r;
 
     // Create L ← A[p..q] and M ← A[q+1..r]
     int n1 = q - p + 1;
@@ -60,6 +68,7 @@ void merge(int p, int q, int r){
         j++;
         k++;
     }
+    barrier(100);
 }
 
 // Divide the array into two subarrays, sort them and merge them
@@ -69,18 +78,14 @@ void mergeSort(int l, int r){
         // m is the point where the array is divided into two subarrays
         int m = l + (r - l) / 2;
 
-        pthread_create(&hilos[h], NULL, mergeSort, (l, m));
-        h++;
-        pthread_create(&hilos[h], NULL, mergeSort, (m+1, r));
-        h++;
-        //mergeSort(l, m);
-        //mergeSort(m + 1, r);
-
-    //crea barrera, genera threads, la barrera es cuando todos están ordenaods
-    //n medios mezclas con semáforo
+        mergeSort(l, m);
+        mergeSort(m+1, r);
 
         // Merge the sorted subarrays
-        merge(l, m, r);
+        struct mergeParams *params = {l, m, r};
+        pthread_create(&hilos[h], NULL, &merge, &params);
+        h++;
+        //merge(l, m, r);
     }
 }
 
@@ -103,8 +108,7 @@ int main(){
     int size = 100;
 
 
-    pthread_create(&hilos[h], NULL, mergeSort, (0, size-1));
-    h++;
+    mergeSort(0, size-1);
     //mergeSort(0, size - 1);
 
     for (int i = 0; i <= 100; i++){
