@@ -82,7 +82,7 @@ void mergeSort(int l, int r){
         mergeSort(m+1, r);
 
         // Merge the sorted subarrays
-        struct mergeParams *params = {l, m, r};
+        struct mergeParam params = {l, m, r};
         pthread_create(&hilos[h], NULL, &merge, &params);
         h++;
         //merge(l, m, r);
