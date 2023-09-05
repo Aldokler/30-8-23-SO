@@ -14,6 +14,7 @@ void monitor(bool c,int threads){
     {
         pthread_cond_wait(&mutex, &cond);
     }
+    pthread_cond_broadcast(&cond);
     pthread_mutex_unlock(&mutex);
 
 }
