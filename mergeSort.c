@@ -18,6 +18,7 @@ struct mergeParam { int p, q, r; } ;
 
 // Merge two subarrays L and M into arr
 void *merge(void *arg){
+    pthread_mutex_lock(&lock);
     struct mergeParam * params = arg;
     int p, q, r;
     p = params->p;
@@ -29,6 +30,7 @@ void *merge(void *arg){
     int n2 = r - q;
 
     int L[n1], M[n2];
+    pthread_mutex_unlock(&lock);
 
     for (int i = 0; i < n1; i++)
         L[i] = arr[p + i];
@@ -107,9 +109,7 @@ int main(){
     }
     int size = 100;
 
-
     mergeSort(0, size-1);
-    //mergeSort(0, size - 1);
 
     for (int i = 0; i <= 100; i++){
         pthread_join(hilos[i], NULL);
