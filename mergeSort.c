@@ -18,33 +18,23 @@ int Gp, Gq, Gr;
 
 // Merge two subarrays L and M into arr
 void *merge(void *arg){
-    pthread_mutex_lock(&lock);
-    int p, q, r;
-    p = Gp;
-    q = Gq;
-    r = Gr;
-    pthread_mutex_unlock(&lock);
-
     // Create L ← A[p..q] and M ← A[q+1..r]
-    int n1 = q - p + 1;
-    int n2 = r - q;
+    //pthread_mutex_lock(&lock);
+    int n1 = Gq - Gp + 1;
+    int n2 = Gr - Gq;
     // Maintain current index of sub-arrays and main array
     int i, j, k;
     i = 0;
     j = 0;
-    k = p;
+    k = Gp;
 
     int L[n1], M[n2];
 
     for (int i = 0; i < n1; i++){
-        pthread_mutex_lock(&lock);
-        L[i] = arr[p + i];
-        pthread_mutex_unlock(&lock);
+        L[i] = arr[Gp + i];
     }
     for (int j = 0; j < n2; j++){
-        pthread_mutex_lock(&lock);
-        M[j] = arr[q + 1 + j];
-        pthread_mutex_unlock(&lock);
+        M[j] = arr[Gq + 1 + j];
     }
 
     // Until we reach either end of either L or M, pick larger among
@@ -53,16 +43,12 @@ void *merge(void *arg){
     {
         if (L[i] <= M[j])
         {
-            pthread_mutex_lock(&lock);
             arr[k] = L[i];
-            pthread_mutex_unlock(&lock);
             i++;
         }
         else
         {
-            pthread_mutex_lock(&lock);
             arr[k] = M[j];
-            pthread_mutex_unlock(&lock);
             j++;
         }
         k++;
@@ -72,21 +58,18 @@ void *merge(void *arg){
     // pick up the remaining elements and put in A[p..r]
     while (i < n1)
     {
-        pthread_mutex_lock(&lock);
         arr[k] = L[i];
-        pthread_mutex_unlock(&lock);
         i++;
         k++;
     }
 
     while (j < n2)
     {
-        pthread_mutex_lock(&lock);
         arr[k] = M[j];
-        pthread_mutex_unlock(&lock);
         j++;
         k++;
     }
+    //pthread_mutex_unlock(&lock);
 
     barrier(elementos);
 }
@@ -102,14 +85,14 @@ void mergeSort(int l, int r){
         mergeSort(m+1, r);
 
         // Merge the sorted subarrays
-        pthread_mutex_lock(&lock);
+        //pthread_mutex_lock(&lock);
         Gp = l;
         Gq = m;
         Gr = r;
         
         pthread_create(&hilos[h], NULL, &merge, NULL);
         h++;
-        pthread_mutex_unlock(&lock);
+        //pthread_mutex_unlock(&lock);
         //merge(l, m, r);
     }
 }
@@ -134,9 +117,11 @@ int main(){
 
     mergeSort(0, size-1);
 
+    /*
     for (int i = 0; i <= elementos; i++){
         pthread_join(hilos[i], NULL);
     }
+    */
     pthread_mutex_destroy(&lock);
 
     printf("Sorted array: \n");
