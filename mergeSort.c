@@ -9,7 +9,8 @@
 #include <pthread.h>
 #include "sync.c"
 
-int arr[10];
+int elementos = 11;
+int arr[11];
 pthread_t hilos[10];
 pthread_mutex_t lock;
 int h = 0;
@@ -87,7 +88,7 @@ void *merge(void *arg){
         k++;
     }
 
-    barrier(10);
+    barrier(elementos);
 }
 
 // Divide the array into two subarrays, sort them and merge them
@@ -105,6 +106,7 @@ void mergeSort(int l, int r){
         Gp = l;
         Gq = m;
         Gr = r;
+        
         pthread_create(&hilos[h], NULL, &merge, NULL);
         h++;
         pthread_mutex_unlock(&lock);
@@ -125,14 +127,14 @@ int main(){
 
     /* Intializes random number generator */
     srand((unsigned)time(&t));
-    for (int i = 0; i < 10; i++){
+    for (int i = 0; i < elementos; i++){
         arr[i] = rand() % 1000;
     }
-    int size = 10;
+    int size = elementos;
 
     mergeSort(0, size-1);
 
-    for (int i = 0; i <= 10; i++){
+    for (int i = 0; i <= elementos; i++){
         pthread_join(hilos[i], NULL);
     }
     pthread_mutex_destroy(&lock);
