@@ -9,8 +9,8 @@
 #include <pthread.h>
 #include "sync.c"
 
-int arr[100];
-pthread_t hilos[100];
+int arr[10];
+pthread_t hilos[10];
 pthread_mutex_t lock;
 int h = 0;
 
@@ -24,7 +24,7 @@ void *merge(void *arg){
     q = params->q;
     r = params->r;
     
-    //printf("p: %d, q: %d, r: %d\np: %d, q: %d, r: %d\n\n", p, q, r, params->p, params->q, params->r);
+    printf("p: %d, q: %d, r: %d\np: %d, q: %d, r: %d\n\n", p, q, r, params->p, params->q, params->r);
 
     // Create L ← A[p..q] and M ← A[q+1..r]
     int n1 = q - p + 1;
@@ -37,10 +37,16 @@ void *merge(void *arg){
 
     int L[n1], M[n2];
 
-    for (int i = 0; i < n1; i++)
+    for (int i = 0; i < n1; i++){
+        pthread_mutex_lock(&lock);
         L[i] = arr[p + i];
-    for (int j = 0; j < n2; j++)
+        pthread_mutex_unlock(&lock);
+    }
+    for (int j = 0; j < n2; j++){
+        pthread_mutex_lock(&lock);
         M[j] = arr[q + 1 + j];
+        pthread_mutex_unlock(&lock);
+    }
 
     // Until we reach either end of either L or M, pick larger among
     // elements L and M and place them in the correct position at A[p..r]
@@ -48,12 +54,16 @@ void *merge(void *arg){
     {
         if (L[i] <= M[j])
         {
+            pthread_mutex_lock(&lock);
             arr[k] = L[i];
+            pthread_mutex_unlock(&lock);
             i++;
         }
         else
         {
+            pthread_mutex_lock(&lock);
             arr[k] = M[j];
+            pthread_mutex_unlock(&lock);
             j++;
         }
         k++;
@@ -75,7 +85,7 @@ void *merge(void *arg){
         k++;
     }
 
-    barrier(100);
+    barrier(10);
 }
 
 // Divide the array into two subarrays, sort them and merge them
@@ -89,11 +99,9 @@ void mergeSort(int l, int r){
         mergeSort(m+1, r);
 
         // Merge the sorted subarrays
-        pthread_mutex_lock(&lock);
         struct mergeParam params = {l, m, r};
         pthread_create(&hilos[h], NULL, &merge, &params);
         h++;
-        pthread_mutex_unlock(&lock);
         //merge(l, m, r);
     }
 }
@@ -111,14 +119,14 @@ int main(){
 
     /* Intializes random number generator */
     srand((unsigned)time(&t));
-    for (int i = 0; i < 100; i++){
-        arr[i] = rand() % 10;
+    for (int i = 0; i < 10; i++){
+        arr[i] = rand() % 1000;
     }
-    int size = 100;
+    int size = 10;
 
     mergeSort(0, size-1);
 
-    for (int i = 0; i <= 100; i++){
+    for (int i = 0; i <= 10; i++){
         pthread_join(hilos[i], NULL);
     }
     pthread_mutex_destroy(&lock);
