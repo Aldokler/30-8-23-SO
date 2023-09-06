@@ -13,18 +13,16 @@ int arr[10];
 pthread_t hilos[10];
 pthread_mutex_t lock;
 int h = 0;
-
-struct mergeParam { int p, q, r; } ;
+int Gp, Gq, Gr;
 
 // Merge two subarrays L and M into arr
 void *merge(void *arg){
-    struct mergeParam * params = arg;
+    pthread_mutex_lock(&lock);
     int p, q, r;
-    p = params->p;
-    q = params->q;
-    r = params->r;
-    
-    printf("p: %d, q: %d, r: %d\np: %d, q: %d, r: %d\n\n", p, q, r, params->p, params->q, params->r);
+    p = Gp;
+    q = Gq;
+    r = Gr;
+    pthread_mutex_unlock(&lock);
 
     // Create L ← A[p..q] and M ← A[q+1..r]
     int n1 = q - p + 1;
@@ -73,14 +71,18 @@ void *merge(void *arg){
     // pick up the remaining elements and put in A[p..r]
     while (i < n1)
     {
+        pthread_mutex_lock(&lock);
         arr[k] = L[i];
+        pthread_mutex_unlock(&lock);
         i++;
         k++;
     }
 
     while (j < n2)
     {
+        pthread_mutex_lock(&lock);
         arr[k] = M[j];
+        pthread_mutex_unlock(&lock);
         j++;
         k++;
     }
@@ -99,9 +101,13 @@ void mergeSort(int l, int r){
         mergeSort(m+1, r);
 
         // Merge the sorted subarrays
-        struct mergeParam params = {l, m, r};
-        pthread_create(&hilos[h], NULL, &merge, &params);
+        pthread_mutex_lock(&lock);
+        Gp = l;
+        Gq = m;
+        Gr = r;
+        pthread_create(&hilos[h], NULL, &merge, NULL);
         h++;
+        pthread_mutex_unlock(&lock);
         //merge(l, m, r);
     }
 }
