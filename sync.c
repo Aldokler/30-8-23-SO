@@ -136,13 +136,11 @@ void barrier(int threads){
 }
 //monitorrrrr
 void monitor(bool c){
-
     pthread_mutex_lock(&mutex);
     while (c)
     {
-        pthread_cond_wait(&mutex, &cond);
+        pthread_cond_wait(&cond, &mutex);
     }
     pthread_cond_broadcast(&cond);
     pthread_mutex_unlock(&mutex);
-
 }
