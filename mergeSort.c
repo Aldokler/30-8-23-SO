@@ -23,6 +23,8 @@ void *merge(void *arg){
     p = params->p;
     q = params->q;
     r = params->r;
+    
+    //printf("p: %d, q: %d, r: %d\np: %d, q: %d, r: %d\n\n", p, q, r, params->p, params->q, params->r);
 
     // Create L ← A[p..q] and M ← A[q+1..r]
     int n1 = q - p + 1;
@@ -33,59 +35,44 @@ void *merge(void *arg){
     j = 0;
     k = p;
 
-    if (n1 <= 0){
-        int M[n2];
-        for (int j = 0; j < n2; j++)
-            M[j] = arr[q + 1 + j];
-        while (j < n2){
-            arr[k] = M[j];
-            j++;
-            k++;
-        }
-    } else if (n2 <= 0){
-        int L[n1];
-        for (int i = 0; i < n1; i++)
-            L[i] = arr[p + i];
-        while (i < n1){
+    int L[n1], M[n2];
+
+    for (int i = 0; i < n1; i++)
+        L[i] = arr[p + i];
+    for (int j = 0; j < n2; j++)
+        M[j] = arr[q + 1 + j];
+
+    // Until we reach either end of either L or M, pick larger among
+    // elements L and M and place them in the correct position at A[p..r]
+    while (i < n1 && j < n2)
+    {
+        if (L[i] <= M[j])
+        {
             arr[k] = L[i];
             i++;
-            k++;
         }
-    } else {
-        int L[n1], M[n2];
-
-        for (int i = 0; i < n1; i++)
-            L[i] = arr[p + i];
-        for (int j = 0; j < n2; j++)
-            M[j] = arr[q + 1 + j];
-
-        // Until we reach either end of either L or M, pick larger among
-        // elements L and M and place them in the correct position at A[p..r]
-        while (i < n1 && j < n2){
-            if (L[i] <= M[j]){
-                arr[k] = L[i];
-                i++;
-            }
-            else{
-                arr[k] = M[j];
-                j++;
-            }
-            k++;
-        }
-
-        // When we run out of elements in either L or M,
-        // pick up the remaining elements and put in A[p..r]
-        while (i < n1){
-            arr[k] = L[i];
-            i++;
-            k++;
-        }
-
-        while (j < n2){
+        else
+        {
             arr[k] = M[j];
             j++;
-            k++;
         }
+        k++;
+    }
+
+    // When we run out of elements in either L or M,
+    // pick up the remaining elements and put in A[p..r]
+    while (i < n1)
+    {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+
+    while (j < n2)
+    {
+        arr[k] = M[j];
+        j++;
+        k++;
     }
 
     barrier(100);
@@ -102,9 +89,11 @@ void mergeSort(int l, int r){
         mergeSort(m+1, r);
 
         // Merge the sorted subarrays
+        pthread_mutex_lock(&lock);
         struct mergeParam params = {l, m, r};
         pthread_create(&hilos[h], NULL, &merge, &params);
         h++;
+        pthread_mutex_unlock(&lock);
         //merge(l, m, r);
     }
 }
@@ -123,7 +112,7 @@ int main(){
     /* Intializes random number generator */
     srand((unsigned)time(&t));
     for (int i = 0; i < 100; i++){
-        arr[i] = rand() % 1000;
+        arr[i] = rand() % 10;
     }
     int size = 100;
 

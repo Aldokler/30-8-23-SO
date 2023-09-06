@@ -122,9 +122,6 @@ void semaphore_signal(Semaphore* sem){
 void barrier(int threads){
     pthread_mutex_lock(&mutex);
     n++;
-    pthread_mutex_unlock(&mutex);
-
-    pthread_mutex_lock(&mutex);
     if (n == threads){
         pthread_cond_broadcast(&cond);
     }
